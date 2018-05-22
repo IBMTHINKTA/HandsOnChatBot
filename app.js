@@ -77,8 +77,8 @@ const conversation = watson.conversation({
 
 let workspaceID; // workspaceID will be set when the workspace is created or validated.
 const conversationSetup = new WatsonConversationSetup(conversation);
-workspaceID = process.env.WORKSPACE_ID;
-/*const workspaceJson = JSON.parse(fs.readFileSync('data/conversation/workspaces/banking.json'));
+//workspaceID = process.env.WORKSPACE_ID;
+const workspaceJson = JSON.parse(fs.readFileSync('data/conversation/workspaces/banking.json'));
 const conversationSetupParams = { default_name: DEFAULT_NAME, workspace_json: workspaceJson };
 conversationSetup.setupConversationWorkspace(conversationSetupParams, (err, data) => {
   if (err) {
@@ -89,7 +89,7 @@ conversationSetup.setupConversationWorkspace(conversationSetupParams, (err, data
     workspaceID = data ;
   }
   
-});*/
+});
 let vcrCredentials = vcapServices.getCredentials('watson_vision_combined');
 
 var vcApi = vcrCredentials['api_key'] || process.env.VC_API;
