@@ -1,0 +1,20 @@
+---
+declared-services:
+  think-conversation-service:
+    label: conversation
+    plan: free
+  think-visual-recognition:
+    label: watson_vision_combined
+    plan: free
+
+applications:
+- path: .
+  memory: 256M
+  instances: 1
+  name: thinkchatbot
+  disk_quota: 256M
+  random-route: true
+  timeout: 180
+  services:
+  - think-conversation-service
+  - think-visual-recognition
