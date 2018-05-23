@@ -4,7 +4,6 @@ declared-services:
     label: conversation
     plan: free
 
-
 applications:
 - path: .
   memory: 256M
@@ -15,4 +14,4 @@ applications:
   timeout: 180
   services:
   - think-conversation-service
-  - think-visual-recognition
+  
