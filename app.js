@@ -62,7 +62,7 @@ var cloudant;
 var fileToUpload;
 
 var dbCredentials = {
-    dbName: 'my_sample_db'
+    dbName: 'transactions'
 };
 
 function getDBCredentialsUrl(jsonData) {
@@ -71,12 +71,14 @@ function getDBCredentialsUrl(jsonData) {
   // VCAP_SERVICES. If you know your service key, you can access the
   // service credentials directly by using the vcapServices object.
   for (var vcapService in vcapServices) {
+    console.log(vcapService)
       if (vcapService.match(/cloudant/i)) {
+          
           return vcapServices[vcapService][0].credentials.url;
       }
   }
 }
-/*
+
 function initDBConnection() {
   //When running on Bluemix, this variable will be set to a json object
   //containing all the service credentials of all the bound services
@@ -92,8 +94,9 @@ function initDBConnection() {
       // Bluemix service.
       // url will be in this format: https://username:password@xxxxxxxxx-bluemix.cloudant.com
       dbCredentials.url = getDBCredentialsUrl(fs.readFileSync("vcap-local.json", "utf-8"));
+      console.log(dbCredentials.url)
   }
-
+ 
   cloudant = require('cloudant')(dbCredentials.url);
 
   // check if DB exists if not create
@@ -107,7 +110,7 @@ function initDBConnection() {
 }
 
 initDBConnection();
-*/
+
 
 // Create the service wrapper
 let conversationCredentials = vcapServices.getCredentials('conversation');
@@ -303,11 +306,11 @@ app.post('/api/message', function(req, res) {
                 data.output.text.push("<iframe width=\"100%\" height=\"50%\" frameborder=\"0\" style=\"border:0\""+
                   "src=\"https://www.google.com/maps/embed/v1/directions?origin="+data.context.org+"&destination=דרך אם המושבות 94 פתח תקווה&key=AIzaSyCU3x1Sf94y2baNCDXNelCNSCEOb_murao\" allowfullscreen></iframe>")
                   delete data.context.org;
+                  return res.json(data);
               }
-              else if(data.context.lastNtrans){
-                var pos=0;
+              else if(data.context.getTransactions && data.context.getTransactions==1){
                 
-                var resText="<table class=\"trans\" dir=\"rtl\"><tr  dir=\"rtl\"><th>תאריך</th><th>שם העסק</th><th>סכום</th></tr>";
+                var resText="<table class=\"trans\" dir=\"rtl\"><tr dir=\"rtl\"><th>תאריך</th><th>סוג פעולה</th><th>סכום</th></tr>";
                 var cloudantquery ={
                   "selector": {},
                   "fields": [
@@ -319,23 +322,38 @@ app.post('/api/message', function(req, res) {
                     "t_date": "desc"
                   }]
                 };
-                dbTransactions.find(cloudantquery, function (err, resp) {
-                for (var i = 0, len = resp.docs.length; i < len; i++){
-                var currdoc=resp.docs[i];
-                  if(currdoc.bname){
-                    var dealDate = new Date(currdoc.t_date)
-                    var dealDateString = formatDate(dealDate,"/")
-                    resText+="<tr><td>"+dealDateString+"</td><td>"+currdoc.bname+"</td><td>₪"+currdoc.amount.toFixed(2)+"</td></tr>";
+                db.find(cloudantquery, function (err, resp) {
+                  if(err){
+                    console.log("err ::",err)
                   }
-                }
-                resText+="</table>";
-                data.output.text[pos]=resText;
-                return res.json(data);
+                  var len=resp.docs.length;
+                  console.log("len ::",len)
+                  if(data.context.transNumber && typeof data.context.transNumber == 'number' &&  data.context.transNumber<len){
+                    len = data.context.transNumber;
+                    delete data.context.transNumber;
+                  }
+                  console.log("len ::",len)
+                  for (var i = 0; i < len; i++){
+                  var currdoc=resp.docs[i];
+                    if(currdoc.bname){
+                      var dealDate = new Date(currdoc.t_date)
+                      var dealDateString = formatDate(dealDate,"/")
+                      resText+="<tr><td>"+dealDateString+"</td><td>"+currdoc.bname+"</td><td>₪"+currdoc.amount.toFixed(2)+"</td></tr>";
+                    }
+                  }
+                  resText+="</table>";
+                  console.log(resText)
+                  data.output.text.push(resText);
+                  console.log(data.output.text)
+                  delete data.context.getTransactions;
+                  return res.json(data);
                 })
               }
-              
-              console.log('conversation.message :: ', JSON.stringify(data));
-              return res.json(data);
+              else{
+                console.log("out ::",data.output.text);
+                //console.log('conversation.message :: ', JSON.stringify(data));
+                return res.json(data);
+              }
             }
           });
         
@@ -348,7 +366,7 @@ app.post('/api/message', function(req, res) {
 * Looks for actions requested by conversation service and provides the requested data.
 *
 **/
-function checkForLookupRequests(data, callback) {
+/*function checkForLookupRequests(data, callback) {
   console.log('checkForLookupRequests');
 
   if (data.context && data.context.action && data.context.action.lookup && data.context.action.lookup != 'complete') {
@@ -581,12 +599,28 @@ function checkForLookupRequests(data, callback) {
     callback(null, data);
     return;
   }
-}
+}*/
 
 /**
  * Handle setup errors by logging and appending to the global error text.
  * @param {String} reason - The error message for the setup error.
  */
+function formatDate(date,sep) {
+  var d = new Date(date),
+      month = '' + (d.getMonth() + 1),
+      day = '' + d.getDate(),
+      year = d.getFullYear();
+
+  if (month.length < 2) month = '0' + month;
+  if (day.length < 2) day = '0' + day;
+  if(sep=="/")
+  {
+    return [day,month, year].join('/');
+  }
+  else{
+    return [year, month, day].join('-');
+  }
+}
 function handleSetupError(reason) {
   setupError += ' ' + reason;
   console.error('The app failed to initialize properly. Setup and restart needed.' + setupError);
