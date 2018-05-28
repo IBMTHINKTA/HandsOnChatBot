@@ -112,19 +112,26 @@ function initDBConnection() {
           if (errf) {
             console.log('Could not create doc 1 ');
           }
-        })
+        });
         currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/2.json", "utf-8"))
         db.insert(currDoc, function(errf, dataDoc) {
           if (errf) {
             console.log('Could not create doc 2 ');
           }
-        })
+        });
         currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/3.json", "utf-8"))
         db.insert(currDoc, function(errf, dataDoc) {
           if (errf) {
             console.log('Could not create doc 3 ');
           }
-        })
+        });
+
+        currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/des.json", "utf-8"))
+        db.insert(currDoc, function(errf, dataDoc) {
+          if (errf) {
+            console.log('Could not create doc des ');
+          }
+        });
       }
   });
 
