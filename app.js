@@ -102,12 +102,33 @@ function initDBConnection() {
 
   // check if DB exists if not create
   cloudant.db.create(dbCredentials.dbName, function(err, res) {
+      db = cloudant.use(dbCredentials.dbName);
       if (err) {
           console.log('Could not create new db: ' + dbCredentials.dbName + ', it might already exist.');
       }
+      else{
+        var currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/1.json", "utf-8"))
+        db.insert(currDoc, function(errf, dataDoc) {
+          if (errf) {
+            console.log('Could not create doc 1 ');
+          }
+        })
+        currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/2.json", "utf-8"))
+        db.insert(currDoc, function(errf, dataDoc) {
+          if (errf) {
+            console.log('Could not create doc 2 ');
+          }
+        })
+        currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/3.json", "utf-8"))
+        db.insert(currDoc, function(errf, dataDoc) {
+          if (errf) {
+            console.log('Could not create doc 3 ');
+          }
+        })
+      }
   });
 
-  db = cloudant.use(dbCredentials.dbName);
+  
 }
 
 initDBConnection();
@@ -146,10 +167,11 @@ conversationSetup.setupConversationWorkspace(conversationSetupParams, (err, data
   }
   
 });
-let vcrCredentials = vcapServices.getCredentials('watson_vision_combined');
 
-var vcApi = vcrCredentials['api_key'] || process.env.VC_API;
+//let vcrCredentials = vcapServices.getCredentials('watson_vision_combined');
 
+//var vcApi = vcrCredentials['api_key'] || process.env.VC_API;
+var vcApi =  process.env.VC_API;
 var visual_recognition = new VisualRecognitionV3({
     
   url: "https://gateway.watsonplatform.net/visual-recognition/api",
