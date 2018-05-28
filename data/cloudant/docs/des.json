@@ -1,0 +1,22 @@
+{
+    "_id": "_design/62714e99df265b2ca14f529faa3056e90e1f0783",
+    "language": "query",
+    "views": {
+      "t_date-json-index": {
+        "map": {
+          "fields": {
+            "t_date": "asc"
+          },
+          "partial_filter_selector": {}
+        },
+        "reduce": "_count",
+        "options": {
+          "def": {
+            "fields": [
+              "t_date"
+            ]
+          }
+        }
+      }
+    }
+  }
