@@ -23,6 +23,7 @@ require('dotenv').config({
 const express = require('express'); // app server
 const bodyParser = require('body-parser'); // parser for post requests
 const watson = require('watson-developer-cloud'); // watson sdk
+var AssistantV1 = require('watson-developer-cloud/assistant/v1');
 var VisualRecognitionV3 = require('watson-developer-cloud/visual-recognition/v3');
 const fs = require('fs'); // file system for loading JSON
 
@@ -123,12 +124,11 @@ if (process.env.service_watson_discovery !== undefined) {
   conversationUsername = conversationCredentials['username'];
   conversationPassword = conversationCredentials['password'];
 }
-const conversation = watson.conversation({
+var conversation = new AssistantV1({
+  version: '2018-02-16',
   url: conversationUrl,
   username: conversationUsername,
-  password: conversationPassword,
-  version_date: '2018-02-16',
-  version: 'v1'
+  password: conversationPassword
 });
 
 let workspaceID; // workspaceID will be set when the workspace is created or validated.
@@ -152,7 +152,6 @@ var vcApi = vcrCredentials['api_key'] || process.env.VC_API;
 
 var visual_recognition = new VisualRecognitionV3({
     
-  
   url: "https://gateway.watsonplatform.net/visual-recognition/api",
   iam_apikey: vcApi,
   version_date: '2018-03-19'
