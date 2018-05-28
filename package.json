@@ -13,6 +13,7 @@
     "body-parser": "^1.15.2",
     "cf-deployment-tracker-client": "*",
     "cfenv": "^1.0.3",
+    "cloudant": "^1.10.0-NOTICE",
     "dotenv": "^2.0.0",
     "express": "^4.13.4",
     "font-awesome": "^4.7.0",
@@ -20,7 +21,7 @@
     "https": "^1.0.0",
     "numeral": "^1.5.3",
     "vcap_services": "^0.2.0",
-    "watson-developer-cloud": "^2.32.0"
+    "watson-developer-cloud": "^3.4.2"
   },
   "repository": {
     "type": "git",

@@ -3,7 +3,12 @@ declared-services:
   think-conversation-service:
     label: conversation
     plan: free
-
+  #think-visual-recognition:
+  #  label: watson_vision_combined
+  #  plan: free
+  think-cloudantNoSQLDB:
+    label: cloudantNoSQLDB 
+    plan: Lite 
 applications:
 - path: .
   memory: 256M
@@ -14,4 +19,5 @@ applications:
   timeout: 180
   services:
   - think-conversation-service
-  
+  #- think-visual-recognition
+  - think-cloudantNoSQLDB
