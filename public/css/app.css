@@ -88,6 +88,28 @@ div {
   -ms-flex-direction: row;
 }
 
+.trans {
+  border-collapse: collapse;
+  width: 80%;
+  padding: 3px solid white;
+}
+
+.trans td, .trans th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.trans tr:nth-child(even){background-color: #f2f2f2;}
+
+.trans tr:hover {background-color: rgb(144, 196, 255);}
+
+.trans th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: right;
+  background-color: #ddd;
+  color: rgb(18, 13, 41);
+}
 .responsive-column {
   -webkit-flex: 1;
   -ms-flex: 1;
