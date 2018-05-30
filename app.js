@@ -265,7 +265,6 @@ app.post('/api/message', function(req, res) {
   });
 
   app.post('/api/picture', function(req, res) {
-    var workspace = process.env.WORKSPACE_ID;
     var pic = String(req.body.input.picInput);
     var regex = /^data:.+\/(.+);base64,(.*)$/;
     var matches = pic.match(regex);
@@ -275,15 +274,13 @@ app.post('/api/message', function(req, res) {
     var fileName ="fl"+String(Math.floor(Math.random() * 10000000000) + 1  )+"."+ext;
     fs.writeFileSync(fileName, buffer);
     var params = {
-      images_filea: fs.createReadStream(fileName)
+      images_file: fs.createReadStream(fileName)
     };
     
     console.log(params)
     visual_recognition.detectFaces(params, function(err, res2) {
-      if (err){
+      if (err)
         console.log(err);
-        fs.writeFileSync('log.log', err);
-    }
       else{
         var newContext=req.body.context
         var respText = JSON.stringify(res2, null, 2)
@@ -298,7 +295,7 @@ app.post('/api/message', function(req, res) {
         
         console.log(newContext)
         var payload = {
-          workspace_id: workspace,
+          workspace_id: workspaceID,
           context:  newContext|| {},
           input: inpt || {}
         };
