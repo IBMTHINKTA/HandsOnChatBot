@@ -178,7 +178,7 @@ conversationSetup.setupConversationWorkspace(conversationSetupParams, (err, data
 //let vcrCredentials = vcapServices.getCredentials('watson_vision_combined');
 
 //var vcApi = vcrCredentials['api_key'] || process.env.VC_API;
-var vcApi =  'M6oPmPvcCXlMPlza8r6b095sCgWYqr_86QQ9RRvo-HTG';
+var vcApi =  process.env.VC_API;
 var visual_recognition = new VisualRecognitionV3({
     
   url: "https://gateway.watsonplatform.net/visual-recognition/api",
@@ -275,12 +275,15 @@ app.post('/api/message', function(req, res) {
     var fileName ="fl"+String(Math.floor(Math.random() * 10000000000) + 1  )+"."+ext;
     fs.writeFileSync(fileName, buffer);
     var params = {
-      images_file: fs.createReadStream(fileName)
+      images_filea: fs.createReadStream(fileName)
     };
+    
     console.log(params)
     visual_recognition.detectFaces(params, function(err, res2) {
-      if (err)
+      if (err){
         console.log(err);
+        fs.writeFileSync('log.log', err);
+    }
       else{
         var newContext=req.body.context
         var respText = JSON.stringify(res2, null, 2)
@@ -344,6 +347,7 @@ app.post('/api/message', function(req, res) {
                   "fields": [
                     "bname",
                     "t_date",
+                    "type",
                     "amount"
                   ],
                   "sort": [{
@@ -366,6 +370,14 @@ app.post('/api/message', function(req, res) {
                     if(currdoc.bname){
                       var dealDate = new Date(currdoc.t_date)
                       var dealDateString = formatDate(dealDate,"/")
+                      var credit=""
+                      var debit=""
+                      if(currdoc.amount){
+                        debit =currdoc.amount.toFixed(2)
+                      }
+                      else{
+                        credit =currdoc.amount.toFixed(2)
+                      }
                       resText+="<tr><td>"+dealDateString+"</td><td>"+currdoc.bname+"</td><td>₪"+currdoc.amount.toFixed(2)+"</td></tr>";
                     }
                   }
