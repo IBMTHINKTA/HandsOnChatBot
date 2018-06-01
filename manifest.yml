@@ -19,5 +19,5 @@ applications:
   timeout: 180
   services:
   - think-conversation-service
-  #- think-visual-recognition
+  - think-visual-recognition
   - think-cloudantNoSQLDB
