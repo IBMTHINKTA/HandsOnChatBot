@@ -3,9 +3,9 @@ declared-services:
   think-conversation-service:
     label: conversation
     plan: free
-  #think-visual-recognition:
-  #  label: watson_vision_combined
-  #  plan: free
+  think-visual-recognition:
+    label: watson_vision_combined
+    plan: lite
   think-cloudantNoSQLDB:
     label: cloudantNoSQLDB 
     plan: Lite 
