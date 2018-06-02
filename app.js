@@ -63,7 +63,8 @@ var cloudant;
 var fileToUpload;
 
 var dbCredentials = {
-    dbName: 'transactions'
+    dbName: 'transactions',
+    dbName_2:'branches'
 };
 
 function getDBCredentialsUrl(jsonData) {
@@ -107,22 +108,40 @@ function initDBConnection() {
           console.log('Could not create new db: ' + dbCredentials.dbName + ', it might already exist.');
       }
       else{
-        var currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/1.json", "utf-8"))
+        var currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/transaction_1.json", "utf-8"))
         db.insert(currDoc, function(errf, dataDoc) {
           if (errf) {
             console.log('Could not create doc 1 ');
           }
         });
-        currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/2.json", "utf-8"))
+        currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/transaction_2.json", "utf-8"))
         db.insert(currDoc, function(errf, dataDoc) {
           if (errf) {
             console.log('Could not create doc 2 ');
           }
         });
-        currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/3.json", "utf-8"))
+        currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/transaction_3.json", "utf-8"))
         db.insert(currDoc, function(errf, dataDoc) {
           if (errf) {
             console.log('Could not create doc 3 ');
+          }
+        });
+        currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/transaction_4.json", "utf-8"))
+        db.insert(currDoc, function(errf, dataDoc) {
+          if (errf) {
+            console.log('Could not create doc 4 ');
+          }
+        });
+        currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/transaction_5.json", "utf-8"))
+        db.insert(currDoc, function(errf, dataDoc) {
+          if (errf) {
+            console.log('Could not create doc 5 ');
+          }
+        });
+        currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/transaction_6.json", "utf-8"))
+        db.insert(currDoc, function(errf, dataDoc) {
+          if (errf) {
+            console.log('Could not create doc 6 ');
           }
         });
 
@@ -133,6 +152,26 @@ function initDBConnection() {
           }
         });
       }
+  });
+  cloudant.db.create(dbCredentials.dbName_2, function(err, res) {
+    db_2 = cloudant.use(dbCredentials.dbName_2);
+    if (err) {
+        console.log('Could not create new db: ' + dbCredentials.dbName_2 + ', it might already exist.');
+    }
+    else{
+      var currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/branch_1.json", "utf-8"))
+      db.insert(currDoc, function(errf, dataDoc) {
+        if (errf) {
+          console.log('Could not create branch 1 ');
+        }
+      });
+      currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/branch_2.json", "utf-8"))
+      db.insert(currDoc, function(errf, dataDoc) {
+        if (errf) {
+          console.log('Could not create branch 2 ');
+        }
+      });
+    }
   });
 
   
@@ -322,7 +361,8 @@ app.post('/api/message', function(req, res) {
   function callconversation(payload) {
     const queryInput = JSON.stringify(payload.input);
     // const context_input = JSON.stringify(payload.context);
-    
+    //https://maps.googleapis.com/maps/api/distancematrix/json?origins=%D7%AA%D7%9C%20%D7%90%D7%91%D7%99%D7%91&destinations=%D7%99%D7%A4%D7%95
+    // rows[0].elements[0].distance.value
           console.log("call")
           conversation.message(payload, function(err, data) {
             if (err) {
