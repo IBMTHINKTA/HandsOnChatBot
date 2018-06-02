@@ -177,7 +177,7 @@ conversationSetup.setupConversationWorkspace(conversationSetupParams, (err, data
 
 let vcrCredentials = vcapServices.getCredentials('watson_vision_combined');
 
-var vcApi = vcrCredentials['api_key'] ;//|| process.env.VC_API;
+var vcApi = vcrCredentials['apikey'] ;//|| process.env.VC_API;
 //var vcApi =  process.env.VC_API;
 var visual_recognition = new VisualRecognitionV3({
     
