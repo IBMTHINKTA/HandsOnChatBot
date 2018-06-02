@@ -177,7 +177,7 @@ conversationSetup.setupConversationWorkspace(conversationSetupParams, (err, data
 
 let vcrCredentials = vcapServices.getCredentials('watson_vision_combined');
 
-var vcApi = vcrCredentials['api_key'] ;//|| process.env.VC_API;
+var vcApi = vcrCredentials['api_key'] || process.env.VC_API;
 //var vcApi =  process.env.VC_API;
 var visual_recognition = new VisualRecognitionV3({
     
@@ -338,7 +338,7 @@ app.post('/api/message', function(req, res) {
               }
               else if(data.context.getTransactions && data.context.getTransactions==1){
                 
-                var resText="<table class=\"trans\" dir=\"rtl\"><tr dir=\"rtl\"><th>תאריך</th><th>סוג פעולה</th><th>סכום</th></tr>";
+                var resText="<table class=\"trans\" dir=\"rtl\"><tr dir=\"rtl\"><th>תאריך</th><th>סוג פעולה</th><th>זכות ₪</th><th>חובה ₪</th></tr>";
                 var cloudantquery ={
                   "selector": {},
                   "fields": [
@@ -365,17 +365,18 @@ app.post('/api/message', function(req, res) {
                   for (var i = 0; i < len; i++){
                   var currdoc=resp.docs[i];
                     if(currdoc.bname){
+                      var type = currdoc.type
                       var dealDate = new Date(currdoc.t_date)
                       var dealDateString = formatDate(dealDate,"/")
                       var credit=""
                       var debit=""
-                      if(currdoc.amount){
+                      if(type=="ח"){
                         debit =currdoc.amount.toFixed(2)
                       }
                       else{
                         credit =currdoc.amount.toFixed(2)
                       }
-                      resText+="<tr><td>"+dealDateString+"</td><td>"+currdoc.bname+"</td><td>₪"+currdoc.amount.toFixed(2)+"</td></tr>";
+                      resText+="<tr><td>"+dealDateString+"</td><td>"+currdoc.bname+"</td><td>"+credit+"</td><td>"+debit+"</td></tr>";
                     }
                   }
                   resText+="</table>";
