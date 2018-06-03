@@ -31,8 +31,8 @@ const fs = require('fs'); // file system for loading JSON
 // for more info, see: https://www.npmjs.com/package/cfenv
 // const cfenv = require('cfenv');
 // const url = require('url');
-// const http = require('http');
-// const https = require('https');
+const http = require('http');
+const https = require('https');
 
 const numeral = require('numeral');
 const vcapServices = require('vcap_services');
@@ -57,6 +57,7 @@ app.use('/font-awesome', express.static(__dirname + '/node_modules/font-awesome'
 let setupError = '';
 
 var db;
+var db_2;
 
 var cloudant;
 
@@ -159,14 +160,14 @@ function initDBConnection() {
         console.log('Could not create new db: ' + dbCredentials.dbName_2 + ', it might already exist.');
     }
     else{
-      var currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/branch_1.json", "utf-8"))
-      db.insert(currDoc, function(errf, dataDoc) {
+      var currBranch = JSON.parse(fs.readFileSync("data/cloudant/docs/branch_1.json", "utf-8"))
+      db_2.insert(currBranch, function(errf, dataDoc) {
         if (errf) {
           console.log('Could not create branch 1 ');
         }
       });
-      currDoc = JSON.parse(fs.readFileSync("data/cloudant/docs/branch_2.json", "utf-8"))
-      db.insert(currDoc, function(errf, dataDoc) {
+      currBranch = JSON.parse(fs.readFileSync("data/cloudant/docs/branch_2.json", "utf-8"))
+      db_2.insert(currBranch, function(errf, dataDoc) {
         if (errf) {
           console.log('Could not create branch 2 ');
         }
@@ -216,7 +217,7 @@ conversationSetup.setupConversationWorkspace(conversationSetupParams, (err, data
 
 let vcrCredentials = vcapServices.getCredentials('watson_vision_combined');
 
-var vcApi = vcrCredentials['apikey'] ;//|| process.env.VC_API;
+var vcApi = vcrCredentials['apikey'] || process.env.VC_API;
 //var vcApi =  process.env.VC_API;
 var visual_recognition = new VisualRecognitionV3({
     
@@ -370,7 +371,43 @@ app.post('/api/message', function(req, res) {
               return res.status(err.code || 500).json(err);
             } else {
               if(data.context.org){
+                var orgLoc = data.context.org
+                var cloudantquery ={
+                  "selector": {},
+                  "fields": [
+                    "b_address"
+                  ]
+                };
+                db_2.find(cloudantquery, function (errBranch, respBranch) {
+                  if(errBranch){
+                    console.log("err ::",errBranch)
+                  }
+                  var len=respBranch.docs.length;
+                  
+            
+                  for (var i = 0; i < len; i++){
+                    
+                    var getUrl = encodeURI('https://maps.googleapis.com/maps/api/distancematrix/json?origins='+orgLoc+'&destinations='+respBranch.docs[i].b_address);
+                    https.get(getUrl, (resp) => {
+                        let newdata = '';
+                        // A chunk of data has been recieved.
+                        resp.on('data', (chunk) => {
+                            newdata += chunk;
+                        });
+                      
+                        // The whole response has been received. Print out the result.
+                        resp.on('end', () => {
+                          console.log(newdata)
+                          console.log(JSON.parse(newdata).rows[0].elements[0].distance.value)
+                      })
+                    });
+                  }
 
+                  if(data.context.transNumber && typeof data.context.transNumber == 'number' &&  data.context.transNumber<len){
+                    len = data.context.transNumber;
+                    delete data.context.transNumber;
+                  }
+                })
                 data.output.text.push("<iframe width=\"100%\" height=\"50%\" frameborder=\"0\" style=\"border:0\""+
                   "src=\"https://www.google.com/maps/embed/v1/directions?origin="+data.context.org+"&destination=דרך אם המושבות 94 פתח תקווה&key=AIzaSyCU3x1Sf94y2baNCDXNelCNSCEOb_murao\" allowfullscreen></iframe>")
                   delete data.context.org;
@@ -403,21 +440,21 @@ app.post('/api/message', function(req, res) {
                   }
                   console.log("len ::",len)
                   for (var i = 0; i < len; i++){
-                  var currdoc=resp.docs[i];
-                    if(currdoc.bname){
-                      var type = currdoc.type
-                      var dealDate = new Date(currdoc.t_date)
-                      var dealDateString = formatDate(dealDate,"/")
-                      var credit=""
-                      var debit=""
-                      if(type=="ח"){
-                        debit =currdoc.amount.toFixed(2)
+                    var currdoc=resp.docs[i];
+                      if(currdoc.bname){
+                        var type = currdoc.type
+                        var dealDate = new Date(currdoc.t_date)
+                        var dealDateString = formatDate(dealDate,"/")
+                        var credit=""
+                        var debit=""
+                        if(type=="ח"){
+                          debit =currdoc.amount.toFixed(2)
+                        }
+                        else{
+                          credit =currdoc.amount.toFixed(2)
+                        }
+                        resText+="<tr><td>"+dealDateString+"</td><td>"+currdoc.bname+"</td><td>"+credit+"</td><td>"+debit+"</td></tr>";
                       }
-                      else{
-                        credit =currdoc.amount.toFixed(2)
-                      }
-                      resText+="<tr><td>"+dealDateString+"</td><td>"+currdoc.bname+"</td><td>"+credit+"</td><td>"+debit+"</td></tr>";
-                    }
                   }
                   resText+="</table>";
                   console.log(resText)
@@ -439,245 +476,6 @@ app.post('/api/message', function(req, res) {
 });
 
 
-/**
-*
-* Looks for actions requested by conversation service and provides the requested data.
-*
-**/
-/*function checkForLookupRequests(data, callback) {
-  console.log('checkForLookupRequests');
-
-  if (data.context && data.context.action && data.context.action.lookup && data.context.action.lookup != 'complete') {
-    const payload = {
-      workspace_id: workspaceID,
-      context: data.context,
-      input: data.input
-    };
-
-    // conversation requests a data lookup action
-    if (data.context.action.lookup === LOOKUP_BALANCE) {
-      console.log('Lookup Balance requested');
-      // if account type is specified (checking, savings or credit card)
-      if (data.context.action.account_type && data.context.action.account_type != '') {
-        // lookup account information services and update context with account data
-        bankingServices.getAccountInfo(7829706, data.context.action.account_type, function(err, accounts) {
-          if (err) {
-            console.log('Error while calling bankingServices.getAccountInfo ', err);
-            callback(err, null);
-            return;
-          }
-          const len = accounts ? accounts.length : 0;
-
-          const appendAccountResponse = data.context.action.append_response && data.context.action.append_response === true ? true : false;
-
-          let accountsResultText = '';
-
-          for (let i = 0; i < len; i++) {
-            accounts[i].balance = accounts[i].balance ? numeral(accounts[i].balance).format('INR 0,0.00') : '';
-
-            if (accounts[i].available_credit)
-              accounts[i].available_credit = accounts[i].available_credit ? numeral(accounts[i].available_credit).format('INR 0,0.00') : '';
-
-            if (accounts[i].last_statement_balance)
-              accounts[i].last_statement_balance = accounts[i].last_statement_balance ? numeral(accounts[i].last_statement_balance).format('INR 0,0.00') : '';
-
-            if (appendAccountResponse === true) {
-              accountsResultText += accounts[i].number + ' ' + accounts[i].type + ' Balance: ' + accounts[i].balance + '<br/>';
-            }
-          }
-
-          payload.context['accounts'] = accounts;
-
-          // clear the context's action since the lookup was completed.
-          payload.context.action = {};
-
-          if (!appendAccountResponse) {
-            console.log('call conversation.message with lookup results.');
-            conversation.message(payload, function(err, data) {
-              if (err) {
-                console.log('Error while calling conversation.message with lookup result', err);
-                callback(err, null);
-              } else {
-                console.log('checkForLookupRequests conversation.message :: ', JSON.stringify(data));
-                callback(null, data);
-              }
-            });
-          } else {
-            console.log('append lookup results to the output.');
-            // append accounts list text to response array
-            if (data.output.text) {
-              data.output.text.push(accountsResultText);
-            }
-            // clear the context's action since the lookup and append was completed.
-            data.context.action = {};
-
-            callback(null, data);
-          }
-        });
-      }
-    } else if (data.context.action.lookup === LOOKUP_TRANSACTIONS) {
-      console.log('Lookup Transactions requested');
-      bankingServices.getTransactions(7829706, data.context.action.category, function(err, transactionResponse) {
-        if (err) {
-          console.log('Error while calling account services for transactions', err);
-          callback(err, null);
-        } else {
-          let responseTxtAppend = '';
-          if (data.context.action.append_total && data.context.action.append_total === true) {
-            responseTxtAppend += 'Total = <b>' + numeral(transactionResponse.total).format('INR 0,0.00') + '</b>';
-          }
-
-          if (transactionResponse.transactions && transactionResponse.transactions.length > 0) {
-            // append transactions
-            const len = transactionResponse.transactions.length;
-            const sDt = new Date(data.context.action.startdt);
-            const eDt = new Date(data.context.action.enddt);
-            if (sDt && eDt) {
-              for (let i = 0; i < len; i++) {
-                const transaction = transactionResponse.transactions[i];
-                const tDt = new Date(transaction.date);
-                if (tDt > sDt && tDt < eDt) {
-                  if (data.context.action.append_response && data.context.action.append_response === true) {
-                    responseTxtAppend +=
-                      '<br/>' + transaction.date + ' &nbsp;' + numeral(transaction.amount).format('INR 0,0.00') + ' &nbsp;' + transaction.description;
-                  }
-                }
-              }
-            } else {
-              for (let i = 0; i < len; i++) {
-                const transaction1 = transactionResponse.transactions[i];
-                if (data.context.action.append_response && data.context.action.append_response === true) {
-                  responseTxtAppend +=
-                    '<br/>' + transaction1.date + ' &nbsp;' + numeral(transaction1.amount).format('INR 0,0.00') + ' &nbsp;' + transaction1.description;
-                }
-              }
-            }
-
-            if (responseTxtAppend != '') {
-              console.log('append lookup transaction results to the output.');
-              if (data.output.text) {
-                data.output.text.push(responseTxtAppend);
-              }
-              // clear the context's action since the lookup and append was completed.
-              data.context.action = {};
-            }
-            callback(null, data);
-
-            // clear the context's action since the lookup was completed.
-            payload.context.action = {};
-            return;
-          }
-        }
-      });
-    } else if (data.context.action.lookup === LOOKUP_5TRANSACTIONS) {
-      console.log('Lookup Transactions requested');
-      bankingServices.getTransactions(7829706, data.context.action.category, function(err, transactionResponse) {
-        if (err) {
-          console.log('Error while calling account services for transactions', err);
-          callback(err, null);
-        } else {
-          let responseTxtAppend = '';
-          if (data.context.action.append_total && data.context.action.append_total === true) {
-            responseTxtAppend += 'Total = <b>' + numeral(transactionResponse.total).format('INR 0,0.00') + '</b>';
-          }
-
-          transactionResponse.transactions.sort(function(a1, b1) {
-            const a = new Date(a1.date);
-            const b = new Date(b1.date);
-            return a > b ? -1 : a < b ? 1 : 0;
-          });
-
-          if (transactionResponse.transactions && transactionResponse.transactions.length > 0) {
-            // append transactions
-            const len = 5; // transaction_response.transactions.length;
-            for (let i = 0; i < len; i++) {
-              const transaction = transactionResponse.transactions[i];
-              if (data.context.action.append_response && data.context.action.append_response === true) {
-                responseTxtAppend +=
-                  '<br/>' + transaction.date + ' &nbsp;' + numeral(transaction.amount).format('INR 0,0.00') + ' &nbsp;' + transaction.description;
-              }
-            }
-          }
-          if (responseTxtAppend != '') {
-            console.log('append lookup transaction results to the output.');
-            if (data.output.text) {
-              data.output.text.push(responseTxtAppend);
-            }
-            // clear the context's action since the lookup and append was completed.
-            data.context.action = {};
-          }
-          callback(null, data);
-
-          // clear the context's action since the lookup was completed.
-          payload.context.action = {};
-          return;
-        }
-      });
-    } else if (data.context.action.lookup === 'branch') {
-      console.log('************** Branch details *************** InputText : ' + payload.input.text);
-      const loc = data.context.action.Location.toLowerCase();
-      bankingServices.getBranchInfo(loc, function(err, branchMaster) {
-        if (err) {
-          console.log('Error while calling bankingServices.getAccountInfo ', err);
-          callback(err, null);
-          return;
-        }
-
-        const appendBranchResponse = data.context.action.append_response && data.context.action.append_response === true ? true : false;
-
-        let branchText = '';
-
-        if (appendBranchResponse === true) {
-          if (branchMaster != null) {
-            branchText =
-              'Here are the branch details at ' +
-              branchMaster.location +
-              ' <br/>Address: ' +
-              branchMaster.address +
-              '<br/>Phone: ' +
-              branchMaster.phone +
-              '<br/>Operation Hours: ' +
-              branchMaster.hours +
-              '<br/>';
-          } else {
-            branchText = "Sorry currently we don't have branch details for " + data.context.action.Location;
-          }
-        }
-
-        payload.context['branch'] = branchMaster;
-
-        // clear the context's action since the lookup was completed.
-        payload.context.action = {};
-
-        if (!appendBranchResponse) {
-          console.log('call conversation.message with lookup results.');
-          conversation.message(payload, function(err, data) {
-            if (err) {
-              console.log('Error while calling conversation.message with lookup result', err);
-              callback(err, null);
-            } else {
-              console.log('checkForLookupRequests conversation.message :: ', JSON.stringify(data));
-              callback(null, data);
-            }
-          });
-        } else {
-          console.log('append lookup results to the output.');
-          // append accounts list text to response array
-          if (data.output.text) {
-            data.output.text.push(branchText);
-          }
-          // clear the context's action since the lookup and append was completed.
-          data.context.action = {};
-
-          callback(null, data);
-        }
-      });
-    } 
-  } else {
-    callback(null, data);
-    return;
-  }
-}*/
 
 /**
  * Handle setup errors by logging and appending to the global error text.
