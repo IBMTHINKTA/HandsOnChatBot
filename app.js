@@ -409,7 +409,7 @@ app.post('/api/message', function(req, res) {
                   }
                 })
                 data.output.text.push("<iframe width=\"100%\" height=\"50%\" frameborder=\"0\" style=\"border:0\""+
-                  "src=\"https://www.google.com/maps/embed/v1/directions?origin="+data.context.org+"&destination=דרך אם המושבות 94 פתח תקווה&key=AIzaSyCU3x1Sf94y2baNCDXNelCNSCEOb_murao\" allowfullscreen></iframe>")
+                  "src=\"https://www.google.com/maps/embed/v1/directions?origin="+data.context.org+"&destination=דרך אם המושבות 94 פתח תקווה&key=AIzaSyDXyWbmNj0Ps7e8wTzYL-jJDoFYs6tNFCs\" allowfullscreen></iframe>")
                   delete data.context.org;
                   return res.json(data);
               }
